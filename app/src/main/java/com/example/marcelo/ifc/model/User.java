@@ -1,4 +1,4 @@
-package com.example.marcelo.ifc.Model;
+package com.example.marcelo.ifc.model;
 
 public class User {
     private String name;
