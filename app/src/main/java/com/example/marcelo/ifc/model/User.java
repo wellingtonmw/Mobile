@@ -106,11 +106,7 @@ public class User {
     }
 
     private boolean validateEmailFormat(final String email) {
-        String expression = "^[\\w\\.-]+@([\\w\\-]+\\.)+[A-Z]{2,4}$";
-        CharSequence inputStr = email;
-        Pattern pattern = Pattern.compile(expression, Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(inputStr);
-        if (matcher.matches()) {
+        if (android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             return true;
         }
         return false;

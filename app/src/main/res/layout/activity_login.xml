@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-xmlns:android="http://schemas.android.com/apk/res/android"
-xmlns:tools="http://schemas.android.com/tools"
-tools:context=".presenter.RegisterUserActivity"
-android:layout_width="fill_parent"
-android:layout_height="fill_parent"
-android:fitsSystemWindows="true">
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:fitsSystemWindows="true"
+            tools:context="com.example.marcelo.ifc.presenter.LoginActivity">
 
 <LinearLayout
     android:orientation="vertical"
@@ -16,23 +15,10 @@ android:fitsSystemWindows="true">
     android:paddingRight="24dp">
 
     <ImageView android:src="@drawable/logo"
-               android:layout_width="450dp"
-               android:layout_height="96dp"
+               android:layout_width="wrap_content"
+               android:layout_height="72dp"
                android:layout_marginBottom="24dp"
                android:layout_gravity="center_horizontal" />
-
-    <!--  Name Label -->
-    <android.support.design.widget.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp">
-        <EditText android:id="@+id/input_name"
-                  android:layout_width="match_parent"
-                  android:layout_height="wrap_content"
-                  android:inputType="textCapWords"
-                  android:hint="Nome" />
-    </android.support.design.widget.TextInputLayout>
 
     <!-- Email Label -->
     <android.support.design.widget.TextInputLayout
@@ -57,24 +43,23 @@ android:fitsSystemWindows="true">
                   android:layout_width="match_parent"
                   android:layout_height="wrap_content"
                   android:inputType="textPassword"
-                  android:hint="Senha"/>
+                  android:hint="Password"/>
     </android.support.design.widget.TextInputLayout>
 
-    <!-- Signup Button -->
     <android.support.v7.widget.AppCompatButton
-        android:id="@+id/btn_signup"
+        android:id="@+id/btn_login"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:layout_marginBottom="24dp"
         android:padding="12dp"
-        android:text="Criar conta"/>
+        android:text="Login"/>
 
-    <TextView android:id="@+id/link_login"
+    <TextView android:id="@+id/link_signup"
               android:layout_width="fill_parent"
               android:layout_height="wrap_content"
               android:layout_marginBottom="24dp"
-              android:text="Já tem uma conta? Login"
+              android:text="Sem conta ainda? Cadastre-se aqui!"
               android:gravity="center"
               android:textSize="16dip"/>
 

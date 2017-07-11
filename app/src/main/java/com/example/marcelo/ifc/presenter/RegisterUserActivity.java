@@ -13,12 +13,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
-public class RegisterUser extends AppCompatActivity {
+public class RegisterUserActivity extends AppCompatActivity {
     private static final String TAG = "RegisterUserActivity";
 
     @InjectView(R.id.input_name) EditText _nameText;
@@ -59,7 +58,7 @@ public class RegisterUser extends AppCompatActivity {
 
         _signupButton.setEnabled(false);
 
-        final ProgressDialog progressDialog = new ProgressDialog(RegisterUser.this,
+        final ProgressDialog progressDialog = new ProgressDialog(RegisterUserActivity.this,
                 R.style.AppTheme);
         progressDialog.setIndeterminate(true);
         progressDialog.setMessage("Criando conta...");
