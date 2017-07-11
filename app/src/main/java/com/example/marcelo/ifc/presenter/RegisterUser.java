@@ -4,6 +4,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import com.example.marcelo.ifc.R;
+import com.example.marcelo.ifc.exception.UserException;
+import com.example.marcelo.ifc.model.User;
 
 import android.app.ProgressDialog;
 import android.util.Log;
@@ -50,7 +52,7 @@ public class RegisterUser extends AppCompatActivity {
     public void signup() {
         Log.d(TAG, "Signup");
 
-        if (!validate()) {
+        if (!validateUser()) {
             onSignupFailed();
             return;
         }
@@ -66,6 +68,12 @@ public class RegisterUser extends AppCompatActivity {
         String name = _nameText.getText().toString();
         String email = _emailText.getText().toString();
         String password = _passwordText.getText().toString();
+
+        try {
+            User user = new User(name, email, password);
+        } catch (UserException e) {
+            e.printStackTrace();
+        }
 
         // TODO: Implement your own signup logic here.
 
@@ -89,37 +97,40 @@ public class RegisterUser extends AppCompatActivity {
     }
 
     public void onSignupFailed() {
-        Toast.makeText(getBaseContext(), "Falha no login", Toast.LENGTH_LONG).show();
-
         _signupButton.setEnabled(true);
     }
 
-    public boolean validate() {
+    public boolean validateUser() {
         boolean valid = true;
 
         String name = _nameText.getText().toString();
         String email = _emailText.getText().toString();
         String password = _passwordText.getText().toString();
 
-        if (name.isEmpty() || name.length() < 3) {
-            _nameText.setError("O nome precisa ter mais que 3 caracteres.");
-            valid = false;
-        } else {
+        User validateUser = new User();
+
+        try {
+            validateUser.setName(name);
             _nameText.setError(null);
+        } catch (UserException userException) {
+            _nameText.setError(userException.getMessage());
+            valid = false;
         }
 
-        if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            _emailText.setError("Coloque um email válido.");
-            valid = false;
-        } else {
+        try {
+            validateUser.setEmail(email);
             _emailText.setError(null);
+        } catch (UserException userException) {
+            _emailText.setError(userException.getMessage());
+            valid = false;
         }
 
-        if (password.isEmpty() || password.length() < 4 || password.length() > 10) {
-            _passwordText.setError("A senha deve ter entre 4 e 10 caracteres.");
-            valid = false;
-        } else {
+        try {
+            validateUser.setPassword(password);
             _passwordText.setError(null);
+        } catch (UserException userException) {
+            _passwordText.setError(userException.getMessage());
+            valid = false;
         }
 
         return valid;
