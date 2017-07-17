@@ -11,6 +11,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
 
 import android.app.ProgressDialog;
@@ -105,7 +107,7 @@ public class RegisterUserActivity extends AppCompatActivity {
                     public void run() {
                         progressDialog.dismiss();
 
-                        if(saveUserIsSuccessful) {
+                        if(saveUserIsSuccessful == CREATE_USER_TASK_IS_SUCCESSFUL) {
                             onSignupSuccess();
                         } else {
                             onSignupFailed();
@@ -125,12 +127,30 @@ public class RegisterUserActivity extends AppCompatActivity {
     }
 
     public void onSignupFailed() {
-        Toast.makeText(getBaseContext(), "Falha no cadastro!",
-                Toast.LENGTH_SHORT).show();
+        switch(saveUserIsSuccessful) {
+            case CREATE_USER_TASK_IS_NOT_SUCCESSFUL:
+                Toast.makeText(getBaseContext(), "Falha no cadastro!",
+                        Toast.LENGTH_SHORT).show();
+                break;
+            case USER_AUTH_COLLISION:
+                Toast.makeText(getBaseContext(), "Email já cadastrado!",
+                        Toast.LENGTH_SHORT).show();
+                break;
+            case USER_AUTH_INVALID_CREDENTIALS:
+                Toast.makeText(getBaseContext(), "Email inválido!",
+                        Toast.LENGTH_SHORT).show();
+                break;
+        }
+
         _signupButton.setEnabled(true);
     }
 
-    private boolean saveUserIsSuccessful;
+    private int saveUserIsSuccessful;
+    final private int CREATE_USER_TASK_IS_SUCCESSFUL = 0;
+    final private int CREATE_USER_TASK_IS_NOT_SUCCESSFUL = 1;
+    final private int USER_AUTH_COLLISION = 2;
+    final private int USER_AUTH_INVALID_CREDENTIALS = 3;
+
 
     private void saveUser(final User user){
         mAuth.createUserWithEmailAndPassword(user.getEmail(), user.getPassword())
@@ -147,17 +167,26 @@ public class RegisterUserActivity extends AppCompatActivity {
                             Log.d(TAG, "createUserWithEmail:success");
                             // On complete call either onSignupSuccess or onSignupFailed
                             // depending on success
-                            saveUserIsSuccessful = true;
+                            saveUserIsSuccessful = CREATE_USER_TASK_IS_SUCCESSFUL;
 
                         } else {
                             Log.w(TAG, "createUserWithEmail:failure", task.getException());
 
                             // On complete call either onSignupSuccess or onSignupFailed
                             // depending on success
-                            saveUserIsSuccessful = false;
+                            saveUserIsSuccessful = CREATE_USER_TASK_IS_NOT_SUCCESSFUL;
 
-                            // Verify that the email exists.
                             // Verify that the email is already registered.
+                            if (task.getException() instanceof FirebaseAuthUserCollisionException) {
+                                _emailText.setError("Email já cadastrado.");
+                                saveUserIsSuccessful = USER_AUTH_COLLISION;
+                            // Verify that the email exists.
+                            } else if (task.getException() instanceof
+                                    FirebaseAuthInvalidCredentialsException) {
+                                _emailText.setError("Ops, esse e-mail é inválido.");
+                                saveUserIsSuccessful = USER_AUTH_INVALID_CREDENTIALS;
+                            }
+
                             // These are two possible causes of exception of task in this else branch
                         }
 
