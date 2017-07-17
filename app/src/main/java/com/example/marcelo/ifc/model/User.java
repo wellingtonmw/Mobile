@@ -33,6 +33,11 @@ public class User {
         setPassword(password);
     }
 
+    public User(String email, String password) throws UserException{
+        setEmail(email);
+        setPassword(password);
+    }
+
     public String getName() {
         return name;
     }

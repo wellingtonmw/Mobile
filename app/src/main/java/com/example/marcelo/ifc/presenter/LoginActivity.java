@@ -1,11 +1,17 @@
 package com.example.marcelo.ifc.presenter;
 
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import com.example.marcelo.ifc.R;
 import com.example.marcelo.ifc.exception.UserException;
 import com.example.marcelo.ifc.model.User;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import android.app.ProgressDialog;
 import android.util.Log;
@@ -28,6 +34,9 @@ public class LoginActivity extends AppCompatActivity {
     @InjectView(R.id.input_password) EditText _passwordText;
     @InjectView(R.id.btn_login) Button _loginButton;
     @InjectView(R.id.link_signup) TextView _signupLink;
+
+    private FirebaseAuth mAuth;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -52,6 +61,8 @@ public class LoginActivity extends AppCompatActivity {
                 startActivityForResult(intent, REQUEST_SIGNUP);
             }
         });
+
+        mAuth = FirebaseAuth.getInstance();
     }
 
     @Override
@@ -80,30 +91,59 @@ public class LoginActivity extends AppCompatActivity {
         String email = _emailText.getText().toString();
         String password = _passwordText.getText().toString();
 
+        User user = null;
+
+        try {
+            user = new User(email, password);
+        } catch (UserException e) {
+            e.printStackTrace();
+        }
+
         // TODO: Implement your own authentication logic here.
+        signIn(user.getEmail(), user.getPassword());
 
         new android.os.Handler().postDelayed(
                 new Runnable() {
                     public void run() {
-                        // On complete call either onLoginSuccess or onLoginFailed
-                        onLoginSuccess();
-                        // onLoginFailed();
                         progressDialog.dismiss();
+                        // On complete call either onLoginSuccess or onLoginFailed
+                        if(signInIsSucessful) {
+                            onLoginSuccess();
+                        } else {
+                            onLoginFailed();
+                        }
+
                     }
                 }, 3000);
     }
 
+    private boolean signInIsSucessful;
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_SIGNUP) {
-            if (resultCode == RESULT_OK) {
+    private void signIn(String email, String password) {
+        Log.d(TAG, "signIn:" + email);
 
-                // TODO: Implement successful signup logic here
-                // By default we just finish the Activity and log them in automatically
-                this.finish();
-            }
-        }
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d(TAG, "signInWithEmail:success");
+                            FirebaseUser user = mAuth.getCurrentUser();
+
+                            Log.d("Email do usuario:", user.getEmail());
+                            Log.d("id do usuario:", user.getUid());
+
+                            signInIsSucessful = true;
+
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.w(TAG, "signInWithEmail:failure", task.getException());
+
+                            signInIsSucessful = false;
+                        }
+                    }
+                });
     }
 
     @Override
@@ -115,10 +155,14 @@ public class LoginActivity extends AppCompatActivity {
     public void onLoginSuccess() {
         _loginButton.setEnabled(true);
         finish();
+
+        Intent intent = new Intent(getApplicationContext(), RegisterUserActivity.class);
+        startActivityForResult(intent, REQUEST_SIGNUP);
     }
 
     public void onLoginFailed() {
-        Toast.makeText(getBaseContext(), "Falha ao realizar o login.", Toast.LENGTH_LONG).show();
+        Toast.makeText(getBaseContext(), "Email ou senha incorreto(s).",
+                Toast.LENGTH_SHORT).show();
 
         _loginButton.setEnabled(true);
     }

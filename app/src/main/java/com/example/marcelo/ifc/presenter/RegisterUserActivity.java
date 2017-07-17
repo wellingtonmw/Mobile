@@ -148,6 +148,7 @@ public class RegisterUserActivity extends AppCompatActivity {
                             // On complete call either onSignupSuccess or onSignupFailed
                             // depending on success
                             saveUserIsSuccessful = true;
+
                         } else {
                             Log.w(TAG, "createUserWithEmail:failure", task.getException());
 
