@@ -2,9 +2,6 @@ package com.example.marcelo.ifc.model;
 
 import com.example.marcelo.ifc.exception.UserException;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class User {
     private static final int MAX_LENGTH_PASSWORD = 10;
     private static final int MIN_LENGTH_PASSWORD = 6;
@@ -12,6 +9,7 @@ public class User {
     private String name;
     private String email;
     private String password;
+    private String id;
 
     public static final String NAME_CANT_BE_EMPTY = "O nome "
             + "não pode ser vazio.";
@@ -29,7 +27,7 @@ public class User {
 
     }
 
-    public User(String email, String name, String password) throws UserException{
+    public User(String name, String email, String password) throws UserException{
         setName(name);
         setEmail(email);
         setPassword(password);
@@ -82,6 +80,18 @@ public class User {
         } else {
             throw new UserException(PASSWORD_CANT_BE_EMPTY);
         }
+    }
+
+    public void setPasswordForFirebase(String password) {
+        this.password = password;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id=id;
     }
 
     private boolean stringIsNotNull(final String string) {
