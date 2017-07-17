@@ -33,7 +33,6 @@ public class RegisterUserActivity extends AppCompatActivity {
     @InjectView(R.id.btn_signup) Button _signupButton;
     @InjectView(R.id.link_login) TextView _loginLink;
     private FirebaseAuth mAuth;
-    private FirebaseAuth.AuthStateListener mAuthListener;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,34 +57,16 @@ public class RegisterUserActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        mAuthListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                if (user != null) {
-                    // User is signed in
-                    Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
-                } else {
-                    // User is signed out
-                    Log.d(TAG, "onAuthStateChanged:signed_out");
-                }
-                // ...
-            }
-        };
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        mAuth.addAuthStateListener(mAuthListener);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        if (mAuthListener != null) {
-            mAuth.removeAuthStateListener(mAuthListener);
-        }
     }
 
     public void signup() {
@@ -122,30 +103,36 @@ public class RegisterUserActivity extends AppCompatActivity {
         new android.os.Handler().postDelayed(
                 new Runnable() {
                     public void run() {
-                        // On complete call either onSignupSuccess or onSignupFailed
-                        // depending on success
-                        onSignupSuccess();
-                        // onSignupFailed();
                         progressDialog.dismiss();
+
+                        if(saveUserIsSuccessful) {
+                            onSignupSuccess();
+                        } else {
+                            onSignupFailed();
+                        }
                     }
                 }, 3000);
     }
 
 
     public void onSignupSuccess() {
+        //When registering, the user is logged in, but he did not login.
+        signOut();
+
         _signupButton.setEnabled(true);
         setResult(RESULT_OK, null);
         finish();
     }
 
     public void onSignupFailed() {
+        Toast.makeText(getBaseContext(), "Falha no cadastro!",
+                Toast.LENGTH_SHORT).show();
         _signupButton.setEnabled(true);
     }
 
-    private void saveUser(final User user){
-        Log.d("EMAIL: ", user.getEmail());
-        Log.d("Senha: ", user.getPassword());
+    private boolean saveUserIsSuccessful;
 
+    private void saveUser(final User user){
         mAuth.createUserWithEmailAndPassword(user.getEmail(), user.getPassword())
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -155,19 +142,31 @@ public class RegisterUserActivity extends AppCompatActivity {
                         // If sign in fails, display a message to the user. If sign in succeeds
                         // the auth state listener will be notified and logic to handle the
                         // signed in user can be handled in the listener.
+
                         if (task.isSuccessful()) {
                             Log.d(TAG, "createUserWithEmail:success");
-                            FirebaseUser user = mAuth.getCurrentUser();
-
+                            // On complete call either onSignupSuccess or onSignupFailed
+                            // depending on success
+                            saveUserIsSuccessful = true;
                         } else {
                             Log.w(TAG, "createUserWithEmail:failure", task.getException());
-                            Toast.makeText(getBaseContext(), "Falha no cadastro!",
-                                    Toast.LENGTH_SHORT).show();
+
+                            // On complete call either onSignupSuccess or onSignupFailed
+                            // depending on success
+                            saveUserIsSuccessful = false;
+
+                            // Verify that the email exists.
+                            // Verify that the email is already registered.
+                            // These are two possible causes of exception of task in this else branch
                         }
 
                         // ...
                     }
                 });
+    }
+
+    private void signOut() {
+        mAuth.signOut();
     }
 
     public boolean validateUser() {

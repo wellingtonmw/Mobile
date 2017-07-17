@@ -82,10 +82,6 @@ public class User {
         }
     }
 
-    public void setPasswordForFirebase(String password) {
-        this.password = password;
-    }
-
     public String getId() {
         return id;
     }

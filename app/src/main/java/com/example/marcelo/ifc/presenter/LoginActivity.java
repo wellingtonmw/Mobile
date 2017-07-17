@@ -54,6 +54,13 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        _emailText.setError(null);
+        _passwordText.setError(null);
+    }
+
     public void login() {
         Log.d(TAG, "Login");
 
