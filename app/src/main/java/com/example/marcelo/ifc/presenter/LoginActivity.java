@@ -91,16 +91,8 @@ public class LoginActivity extends AppCompatActivity {
         String email = _emailText.getText().toString();
         String password = _passwordText.getText().toString();
 
-        User user = null;
-
-        try {
-            user = new User(email, password);
-        } catch (UserException e) {
-            e.printStackTrace();
-        }
-
         // TODO: Implement your own authentication logic here.
-        signIn(user.getEmail(), user.getPassword());
+        signIn(email, password);
 
         new android.os.Handler().postDelayed(
                 new Runnable() {
@@ -156,7 +148,7 @@ public class LoginActivity extends AppCompatActivity {
         _loginButton.setEnabled(true);
         finish();
 
-        Intent intent = new Intent(getApplicationContext(), RegisterUserActivity.class);
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
         startActivityForResult(intent, REQUEST_SIGNUP);
     }
 

@@ -14,6 +14,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import android.app.ProgressDialog;
 import android.util.Log;
@@ -35,6 +37,8 @@ public class RegisterUserActivity extends AppCompatActivity {
     @InjectView(R.id.btn_signup) Button _signupButton;
     @InjectView(R.id.link_login) TextView _loginLink;
     private FirebaseAuth mAuth;
+    private DatabaseReference mDatabase;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,7 +62,7 @@ public class RegisterUserActivity extends AppCompatActivity {
         });
 
         mAuth = FirebaseAuth.getInstance();
-
+        mDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
     @Override
@@ -100,7 +104,7 @@ public class RegisterUserActivity extends AppCompatActivity {
         }
 
         // TODO: Implement your own signup logic here.
-        saveUser(user);
+        saveUserInAuth(user);
 
         new android.os.Handler().postDelayed(
                 new Runnable() {
@@ -152,7 +156,7 @@ public class RegisterUserActivity extends AppCompatActivity {
     final private int USER_AUTH_INVALID_CREDENTIALS = 3;
 
 
-    private void saveUser(final User user){
+    private void saveUserInAuth(final User user){
         mAuth.createUserWithEmailAndPassword(user.getEmail(), user.getPassword())
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -168,6 +172,12 @@ public class RegisterUserActivity extends AppCompatActivity {
                             // On complete call either onSignupSuccess or onSignupFailed
                             // depending on success
                             saveUserIsSuccessful = CREATE_USER_TASK_IS_SUCCESSFUL;
+
+                            //Write the new user in database
+                            FirebaseUser userLogged = mAuth.getCurrentUser();
+                            final String userId = userLogged.getUid();
+
+                            writeNewUser(userId, user.getName(), user.getEmail());
 
                         } else {
                             Log.w(TAG, "createUserWithEmail:failure", task.getException());
@@ -193,6 +203,18 @@ public class RegisterUserActivity extends AppCompatActivity {
                         // ...
                     }
                 });
+    }
+
+    private void writeNewUser(String userId, String name, String email) {
+        User user = null;
+
+        try {
+            user = new User(name, email);
+        } catch (UserException e) {
+            e.printStackTrace();
+        }
+
+        mDatabase.child("users").child(userId).setValue(user);
     }
 
     private void signOut() {

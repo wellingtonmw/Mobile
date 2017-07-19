@@ -33,9 +33,9 @@ public class User {
         setPassword(password);
     }
 
-    public User(String email, String password) throws UserException{
+    public User(String name, String email) throws UserException{
         setEmail(email);
-        setPassword(password);
+        setName(name);
     }
 
     public String getName() {
