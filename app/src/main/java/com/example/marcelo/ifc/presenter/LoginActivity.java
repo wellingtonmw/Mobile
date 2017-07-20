@@ -123,8 +123,8 @@ public class LoginActivity extends AppCompatActivity {
                             Log.d(TAG, "signInWithEmail:success");
                             FirebaseUser user = mAuth.getCurrentUser();
 
-                            Log.d("Email do usuario:", user.getEmail());
-                            Log.d("id do usuario:", user.getUid());
+                            Log.d(TAG + " Email:", user.getEmail());
+                            Log.d(TAG + " User id:", user.getUid());
 
                             signInIsSucessful = true;
 
