@@ -5,8 +5,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import com.example.marcelo.ifc.R;
-import com.example.marcelo.ifc.exception.UserException;
-import com.example.marcelo.ifc.model.User;
+import com.example.marcelo.ifc.presenter.LoginPresenter;
+import com.example.marcelo.ifc.presenter.RegisterUserPresenter;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -36,13 +36,14 @@ public class LoginActivity extends AppCompatActivity {
     @InjectView(R.id.link_signup) TextView _signupLink;
 
     private FirebaseAuth mAuth;
-
+    private LoginPresenter loginPresenter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.inject(this);
+        loginPresenter = LoginPresenter.getInstance(getBaseContext());
 
         _loginButton.setOnClickListener(new View.OnClickListener() {
 
@@ -160,27 +161,19 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public boolean validate() {
-        boolean valid = true;
+        boolean valid = false;
 
         String email = _emailText.getText().toString();
         String password = _passwordText.getText().toString();
 
-        User userValidation = new User();
+        String validateUserEmail=loginPresenter.validateUserEmail(email);
+        _emailText.setError(validateUserEmail);
 
-        try {
-            userValidation.setEmail(email);
-            _emailText.setError(null);
-        } catch (UserException e) {
-            _emailText.setError(e.getMessage());
-            valid = false;
-        }
+        String validateUserPassword=loginPresenter.validateUserPassword(password);
+        _passwordText.setError(validateUserPassword);
 
-        try {
-            userValidation.setPassword(password);
-            _passwordText.setError(null);
-        } catch (UserException e) {
-            _passwordText.setError(e.getMessage());
-            valid = false;
+        if (validateUserEmail == null && validateUserPassword == null) {
+            valid=true;
         }
 
         return valid;
