@@ -1,4 +1,4 @@
-package com.example.marcelo.ifc.presenter;
+package com.example.marcelo.ifc.view;
 
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;

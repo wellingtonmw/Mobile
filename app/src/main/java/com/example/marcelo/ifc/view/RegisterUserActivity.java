@@ -1,12 +1,12 @@
-package com.example.marcelo.ifc.presenter;
+package com.example.marcelo.ifc.view;
 
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import com.example.marcelo.ifc.R;
-import com.example.marcelo.ifc.exception.UserException;
-import com.example.marcelo.ifc.model.User;
+import com.example.marcelo.ifc.presenter.RegisterUserPresenter;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -14,8 +14,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 import android.app.ProgressDialog;
 import android.util.Log;
@@ -24,6 +22,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.concurrent.Executor;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -36,8 +36,9 @@ public class RegisterUserActivity extends AppCompatActivity {
     @InjectView(R.id.input_password) EditText _passwordText;
     @InjectView(R.id.btn_signup) Button _signupButton;
     @InjectView(R.id.link_login) TextView _loginLink;
+
+    private RegisterUserPresenter registerUserPresenter;
     private FirebaseAuth mAuth;
-    private DatabaseReference mDatabase;
 
 
     @Override
@@ -45,6 +46,9 @@ public class RegisterUserActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register_user);
         ButterKnife.inject(this);
+
+        registerUserPresenter = RegisterUserPresenter.getInstance(getBaseContext());
+        mAuth = FirebaseAuth.getInstance();
 
         _signupButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -61,8 +65,6 @@ public class RegisterUserActivity extends AppCompatActivity {
             }
         });
 
-        mAuth = FirebaseAuth.getInstance();
-        mDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
     @Override
@@ -85,33 +87,25 @@ public class RegisterUserActivity extends AppCompatActivity {
 
         _signupButton.setEnabled(false);
 
-        final ProgressDialog progressDialog = new ProgressDialog(RegisterUserActivity.this,
+        final ProgressDialog progressDialog=new ProgressDialog(RegisterUserActivity.this,
                 R.style.AppTheme);
         progressDialog.setIndeterminate(true);
         progressDialog.setMessage("Criando conta...");
         progressDialog.show();
 
-        String name = _nameText.getText().toString();
-        String email = _emailText.getText().toString();
-        String password = _passwordText.getText().toString();
-
-        User user = null;
-
-        try {
-            user = new User(name, email, password);
-        } catch (UserException e) {
-            e.printStackTrace();
-        }
+        String name=_nameText.getText().toString();
+        String email=_emailText.getText().toString();
+        String password=_passwordText.getText().toString();
 
         // TODO: Implement your own signup logic here.
-        saveUserInAuth(user);
+        saveUserInAuth(email, name, password);
 
-        new android.os.Handler().postDelayed(
+        new Handler().postDelayed(
                 new Runnable() {
                     public void run() {
                         progressDialog.dismiss();
 
-                        if(saveUserIsSuccessful == CREATE_USER_TASK_IS_SUCCESSFUL) {
+                        if (saveUserIsSuccessful == CREATE_USER_TASK_IS_SUCCESSFUL) {
                             onSignupSuccess();
                         } else {
                             onSignupFailed();
@@ -123,41 +117,22 @@ public class RegisterUserActivity extends AppCompatActivity {
 
     public void onSignupSuccess() {
         //When registering, the user is logged in, but he did not login.
-        signOut();
+        registerUserPresenter.signOut();
 
         _signupButton.setEnabled(true);
         setResult(RESULT_OK, null);
         finish();
     }
 
-    public void onSignupFailed() {
-        switch(saveUserIsSuccessful) {
-            case CREATE_USER_TASK_IS_NOT_SUCCESSFUL:
-                Toast.makeText(getBaseContext(), "Falha no cadastro!",
-                        Toast.LENGTH_SHORT).show();
-                break;
-            case USER_AUTH_COLLISION:
-                Toast.makeText(getBaseContext(), "Email já cadastrado!",
-                        Toast.LENGTH_SHORT).show();
-                break;
-            case USER_AUTH_INVALID_CREDENTIALS:
-                Toast.makeText(getBaseContext(), "Email inválido!",
-                        Toast.LENGTH_SHORT).show();
-                break;
-        }
-
-        _signupButton.setEnabled(true);
-    }
-
     private int saveUserIsSuccessful;
-    final private int CREATE_USER_TASK_IS_SUCCESSFUL = 0;
-    final private int CREATE_USER_TASK_IS_NOT_SUCCESSFUL = 1;
-    final private int USER_AUTH_COLLISION = 2;
-    final private int USER_AUTH_INVALID_CREDENTIALS = 3;
+    final public int CREATE_USER_TASK_IS_SUCCESSFUL = 0;
+    final public int CREATE_USER_TASK_IS_NOT_SUCCESSFUL = 1;
+    final public int USER_AUTH_COLLISION = 2;
+    final public int USER_AUTH_INVALID_CREDENTIALS = 3;
 
-
-    private void saveUserInAuth(final User user){
-        mAuth.createUserWithEmailAndPassword(user.getEmail(), user.getPassword())
+    public void saveUserInAuth(final String email, final String name, final String password){
+        mAuth = FirebaseAuth.getInstance();
+        mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
@@ -177,7 +152,7 @@ public class RegisterUserActivity extends AppCompatActivity {
                             FirebaseUser userLogged = mAuth.getCurrentUser();
                             final String userId = userLogged.getUid();
 
-                            writeNewUser(userId, user.getName(), user.getEmail());
+                            registerUserPresenter.writeNewUser(userId, name, email);
 
                         } else {
                             Log.w(TAG, "createUserWithEmail:failure", task.getException());
@@ -188,12 +163,10 @@ public class RegisterUserActivity extends AppCompatActivity {
 
                             // Verify that the email is already registered.
                             if (task.getException() instanceof FirebaseAuthUserCollisionException) {
-                                _emailText.setError("Email já cadastrado.");
                                 saveUserIsSuccessful = USER_AUTH_COLLISION;
-                            // Verify that the email exists.
+                                // Verify that the email exists.
                             } else if (task.getException() instanceof
                                     FirebaseAuthInvalidCredentialsException) {
-                                _emailText.setError("Ops, esse e-mail é inválido.");
                                 saveUserIsSuccessful = USER_AUTH_INVALID_CREDENTIALS;
                             }
 
@@ -205,54 +178,53 @@ public class RegisterUserActivity extends AppCompatActivity {
                 });
     }
 
-    private void writeNewUser(String userId, String name, String email) {
-        User user = null;
 
-        try {
-            user = new User(name, email);
-        } catch (UserException e) {
-            e.printStackTrace();
+    public void onSignupFailed() {
+        switch (saveUserIsSuccessful) {
+            case CREATE_USER_TASK_IS_NOT_SUCCESSFUL:
+                Toast.makeText(getBaseContext(), "Falha no cadastro!",
+                        Toast.LENGTH_SHORT).show();
+                break;
+            case USER_AUTH_COLLISION:
+                Toast.makeText(getBaseContext(), "Email já cadastrado!",
+                        Toast.LENGTH_SHORT).show();
+                _emailText.setError("Email já cadastrado.");
+                break;
+            case USER_AUTH_INVALID_CREDENTIALS:
+                Toast.makeText(getBaseContext(), "Email inválido!",
+                        Toast.LENGTH_SHORT).show();
+                _emailText.setError("Ops, esse e-mail é inválido.");
+                break;
         }
 
-        mDatabase.child("users").child(userId).setValue(user);
-    }
-
-    private void signOut() {
-        mAuth.signOut();
+        _signupButton.setEnabled(true);
     }
 
     public boolean validateUser() {
-        boolean valid = true;
+        boolean valid=false;
 
         String name = _nameText.getText().toString();
         String email = _emailText.getText().toString();
         String password = _passwordText.getText().toString();
 
-        User validateUser = new User();
+        String validateUserName=registerUserPresenter.validateUserName(name);
+        _nameText.setError(validateUserName);
 
-        try {
-            validateUser.setName(name);
-            _nameText.setError(null);
-        } catch (UserException userException) {
-            _nameText.setError(userException.getMessage());
-            valid = false;
+        String validateUserEmail=registerUserPresenter.validateUserEmail(email);
+        _emailText.setError(validateUserEmail);
+
+        String validateUserPassword=registerUserPresenter.validateUserPassword(password);
+        _passwordText.setError(validateUserPassword);
+
+        Log.d("validateUserEmail: ", validateUserEmail == null ? "null" : validateUserEmail);
+        Log.d("validateUserName: ", validateUserName == null ? "null" : validateUserName);
+        Log.d("validateUserPassword: ", validateUserPassword == null ? "null" : validateUserPassword);
+
+        if (validateUserEmail == null && validateUserName == null && validateUserPassword == null) {
+            valid=true;
         }
 
-        try {
-            validateUser.setEmail(email);
-            _emailText.setError(null);
-        } catch (UserException userException) {
-            _emailText.setError(userException.getMessage());
-            valid = false;
-        }
-
-        try {
-            validateUser.setPassword(password);
-            _passwordText.setError(null);
-        } catch (UserException userException) {
-            _passwordText.setError(userException.getMessage());
-            valid = false;
-        }
+        Log.d("Validation: ", String.valueOf(valid));
 
         return valid;
     }

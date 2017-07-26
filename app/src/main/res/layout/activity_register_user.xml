@@ -2,7 +2,7 @@
 <ScrollView
 xmlns:android="http://schemas.android.com/apk/res/android"
 xmlns:tools="http://schemas.android.com/tools"
-tools:context=".presenter.RegisterUserActivity"
+tools:context=".view.RegisterUserActivity"
 android:layout_width="fill_parent"
 android:layout_height="fill_parent"
 android:fitsSystemWindows="true">
